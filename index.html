@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button>Click</button>
+    <div id="users"></div>
+    <h1>Добавить пользователя:</h1>
+    <form id="addUserForm">
+      <label for="name">Имя:</label>
+      <input type="text" id="name" required />
+      <label for="age">Возраст:</label>
+      <input type="number" id="age" required />
+      <button type="submit">Добавить</button>
+    </form>
+
+    <script>
+      const but = document.querySelector("button");
+      but.addEventListener("click", () => {
+        fetch("http://localhost:4000/graphql", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: "{ users { id, name, age } }" }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const users = data.data.users;
+            const usersList = document.getElementById("users");
+            users.forEach((user) => {
+              const li = document.createElement("li");
+              li.innerText = `${user.name}, возраст: ${user.age}`;
+              usersList.appendChild(li);
+            });
+          })
+          .catch((error) => console.log(error));
+      });
+
+      document
+        .getElementById("addUserForm")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+          const name = document.getElementById("name").value;
+          const age = Number(document.getElementById("age").value);
+
+          fetch("http://localhost:4000/graphql", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: `mutation { createUser(name: "${name}", age: ${age}) { id, name, age } }`,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const newUser = data.data.createUser;
+              const usersList = document.getElementById("users");
+              const li = document.createElement("li");
+              li.innerText = `${newUser.name}, возраст: ${newUser.age}`;
+              usersList.appendChild(li);
+            })
+            .catch((error) => console.log(error));
+
+          document.getElementById("name").value = "";
+          document.getElementById("age").value = "";
+        });
+    </script>
+  </body>
+</html>
